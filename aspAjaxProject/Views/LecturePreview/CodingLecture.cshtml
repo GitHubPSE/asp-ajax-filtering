@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Lecture Preview</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        #lectureTable td, #lectureTable th {
+            border: 1px solid #ccc;
+            padding: 8px;
+        }
+        #lectureTable {
+            border-collapse: collapse;
+        }
+    </style>
+</head>
+<body>
+<h1>강좌 미리보기</h1>
+
+<div>
+    <label>과목</label>
+    <select id="subjectSelect"></select>
+    <label>출판사</label>
+    <select id="publisherSelect"></select>
+    <label>선생님</label>
+    <select id="teacherSelect"></select>
+    <label>학기</label>
+    <select id="sessionSelect"></select>
+</div>
+
+<table border="1" style="margin-top:20px; width:100%;" id="lectureTable">
+    <thead>
+    <tr>
+        <th>강좌명</th>
+        <th>과목코드</th>
+        <th>출판사</th>
+        <th>선생님명</th>
+        <th>학기코드</th>
+    </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script type="text/javascript">
+    let selectedSubjectCode = "ALL";
+    let selectedPublisherCode = "ALL";
+    let selectedTeacherCode = "ALL";
+    let selectedSessionCode = "0";
+
+    $(function () {
+        loadSubjects();
+
+        $('#subjectSelect').change(function () {
+            selectedSubjectCode = this.value;
+            selectedPublisherCode = "ALL";
+            selectedTeacherCode = "ALL";
+            selectedSessionCode = "0";
+            loadPublishers();
+        });
+
+        $('#publisherSelect').change(function () {
+            selectedPublisherCode = this.value;
+            selectedTeacherCode = "ALL";
+            selectedSessionCode = "0";
+            loadTeachers();
+        });
+
+        $('#teacherSelect').change(function () {
+            selectedTeacherCode = this.value;
+            selectedSessionCode = "0";
+            loadSessions();
+        });
+
+        $('#sessionSelect').change(function () {
+            selectedSessionCode = this.value;
+            if (selectedSessionCode === 0){
+                selectedTeacherCode = "";
+            }
+            loadLectures();
+        });
+    });
+
+    function loadSubjects() {
+        $.ajax({
+            url: '/LecturePreview/GetList',
+            type: 'POST',
+            data: {
+                ListType: 'SUBJECT'
+            },
+            success: function (data) {
+                fillDropdown('#subjectSelect', data, 'subject');
+                loadPublishers();
+            },
+            error: function () {
+                alert('과목 정보를 불러오는데 실패했습니다.');
+            }
+        });
+    }
+
+    function loadPublishers() {
+        $.ajax({
+            url: '/LecturePreview/GetList',
+            type: 'POST',
+            data: {
+                ListType: 'PUBLISHER',
+                Subject: selectedSubjectCode
+            },
+            success: function (data) {
+                fillDropdown('#publisherSelect', data, 'publisher');
+                loadTeachers();
+            },
+            error: function () {
+                alert('출판사 정보를 불러오는데 실패했습니다.');
+            }
+        });
+    }
+
+    function loadTeachers() {
+        $.ajax({
+            url: '/LecturePreview/GetList',
+            type: 'POST',
+            data: {
+                ListType: 'TEACHER',
+                Subject: selectedSubjectCode,
+                Publisher: selectedPublisherCode
+            },
+            success: function (data) {
+                fillDropdown('#teacherSelect', data, 'teacher');
+                loadSessions();
+            },
+            error: function () {
+                alert('선생님 정보를 불러오는데 실패했습니다.');
+            }
+        });
+    }
+
+    function loadSessions() {
+        $.ajax({
+            url: '/LecturePreview/GetList',
+            type: 'POST',
+            data: {
+                ListType: 'SESSION',
+                Subject: selectedSubjectCode,
+                Publisher: selectedPublisherCode,
+                Teacher: selectedTeacherCode
+            },
+            success: function (data) {
+                fillDropdown('#sessionSelect', data, 'session');
+                loadLectures();
+            },
+            error: function () {
+                alert('학기 정보를 불러오는데 실패했습니다.');
+            }
+        });
+    }
+
+    function loadLectures() {
+        $.ajax({
+            url: '/LecturePreview/GetList',
+            type: 'POST',
+            data: {
+                ListType: 'LECTURE',
+                Subject: selectedSubjectCode,
+                Publisher: selectedPublisherCode,
+                Teacher: selectedTeacherCode,
+                Session: selectedSessionCode
+            },
+            success: function (data) {
+                const $tbody = $('#lectureTable tbody').empty();
+                if (data.length < 1) {
+                    $tbody.append('<tr><td colspan="5">강좌가 없습니다.</td></tr>');
+                    return;
+                }
+
+                data.forEach(entry => {
+                    $tbody.append(`<tr>
+                        <td>${entry.lecture}</td>
+                        <td>${entry.subject}</td>
+                        <td>${entry.publisher}</td>
+                        <td>${entry.teacher}</td>
+                        <td>${entry.session}</td>
+                    </tr>`);
+                });
+            },
+            error: function () {
+                alert('강좌 정보를 불러오는데 실패했습니다.');
+            }
+        });
+    }
+
+    function fillDropdown(selector, data, field) {
+    let strHtml = '<option value="ALL">전체</option>';
+    data.forEach(entry => {
+        strHtml += '<option value="' + entry[field] + '">' + entry[field] + '</option>';
+    });
+    $(selector).empty().append(strHtml);
+    }
+</script>
+</body>
+</html>

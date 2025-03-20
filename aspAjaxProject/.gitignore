@@ -1,0 +1,12 @@
+# .NET 관련
+bin/
+obj/
+*.user
+*.suo
+
+# Rider 설정
+.idea/
+
+# 기타
+*.log
+*.DS_Store
