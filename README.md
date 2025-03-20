@@ -15,3 +15,6 @@
 ## 🚀 실행 방법
 1. Rider 또는 Visual Studio에서 실행
 2. `/LecturePreview/CodingLecture` 주소 접속
+
+## 참고
+기존 작업은 DB의 SP를 사용해서 데이터를 가져왔지만 여기서는 로컬에서 간단하게 데이터를 넣어서 필터링 진행
